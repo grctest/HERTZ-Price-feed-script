@@ -86,7 +86,7 @@ main = do
 
     -- | List comprehension expressions
     let blocksSinceGenesis = [prevVal - genesisBlock | prevVal <- blockNumbers] -- Difference between the genesis block and the current block
-    let xPeriod = [x/blocksInPeriod | x <- blocksSinceGenesis] -- The value we want to feed into the sin equation
+    let xPeriod = [(mod' (x/blocksInPeriod) 1.00) | x <- blocksSinceGenesis] -- The value we want to feed into the sin equation
     let priceFeedValue = [(xdrRecentValue + (amplitude * sin((xPVal) * (2 * pi)))) | xPVal <- xPeriod] -- Calculating the price feed variation
     
     -- | Starting output to CSV
