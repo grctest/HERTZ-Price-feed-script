@@ -1,6 +1,6 @@
+#!/usr/bin/env runhaskell
 -- | Enabling the script to be run from the command line
 -- In the future, the script will accept arguments from the CLI.
-#!/usr/bin/env runhaskell
 
 -- | Don't worry about this
 {-# LANGUAGE DeriveAnyClass, DeriveGeneric, OverloadedStrings, ScopedTypeVariables #-}
