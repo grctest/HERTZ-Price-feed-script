@@ -23,10 +23,16 @@ import GHC.Generics
 import Turtle -- You need to install this (cabal install turtle)
 
 -- | Global variables
-blockNumbers = [16621272..16900000] --We want to calculate the wave data for the next few million blocks
+blockNumbers = [16621272..17000000] --We want to calculate the wave data for the next few million blocks
 genesisBlock = 16621271 -- The block we want to reference for a beginning timestamp, this may change prior to the asset 'going live'
 blocksInPeriod = 876000 -- Blocks per 'oscillation' period (Frequency); 876000 is approx one month worth of blocks.
 amplitude = 0.5 -- Varying the reference asset by 50% - Open to suggestion for alternative values, this value may change prior to the asset 'going live'
+
+-- | Test global variables
+--blockNumbers = [2..202]
+--genesisBlock = 1
+--blocksInPeriod = 100 -- Blocks per 'oscillation' period (Frequency); 876000 is approx one month worth of blocks.
+
 
 -- Change these filepath values at your discretion
 jsonFile :: Prelude.FilePath
@@ -55,22 +61,22 @@ jsonToList (x:xs) = do
 
 -- | Write to CSV
 -- Takes three lists in (BlockNumbers, xPeriod and priceFeedValue) as well as the recent backing asset value scraped from Cryptofresh!
-outputToCSV :: [Float] -> [Float] -> [Float] -> Float -> IO ExitCode
-outputToCSV (x:xs) (y:ys) (z:zs) referenceAssetValue =
+outputToCSV :: [Float] -> [Float] -> [Float] -> IO ExitCode
+outputToCSV (x:xs) (y:ys) (z:zs) =
     -- Check if we're on our final recursion, rather than checking for 3 empty lists.
     if (xs == [])
         then do
           -- Final recursion
-          shell (T.pack ("echo " ++ (show x) ++ " " ++ (show y) ++ " " ++ (show z) ++ " " ++ (show referenceAssetValue) ++ " >> " ++ outputFile)) Turtle.empty
+          shell (T.pack ("echo " ++ (show x) ++ " " ++ (show y) ++ " " ++ (show z) ++ " >> " ++ outputFile)) Turtle.empty
         else do
           -- More recursions to go!
-          shell (T.pack ("echo " ++ (show x) ++ " " ++ (show y) ++ " " ++ (show z) ++ " " ++ (show referenceAssetValue) ++ " >> " ++ outputFile)) Turtle.empty
-          outputToCSV xs ys zs referenceAssetValue -- Recursively call this function with the next list elements.
+          shell (T.pack ("echo " ++ (show x) ++ " " ++ (show y) ++ " " ++ (show z) ++ " >> " ++ outputFile)) Turtle.empty
+          outputToCSV xs ys zs -- Recursively call this function with the next list elements.
 
 -- | The main function that is called from the CLI
 -- In the future, we will pass in arguments from the CLI so that global variables aren't hardcoded into the script.
 -- Potential args: Backing asset, Price feed sources, the 'genesis' block for a new HERTZ FBA, Period duration, Amplitude, filenames.
-main :: IO ExitCode
+--main :: IO ExitCode
 main = do
     -- | Scraping cryptofresh's API For the ALTCAP.XDR asset, using the 'Turtle' package.
     -- Using jq to convert cryptofresh's JSON data into a traversable format.
@@ -86,11 +92,12 @@ main = do
 
     -- | List comprehension expressions
     let blocksSinceGenesis = [prevVal - genesisBlock | prevVal <- blockNumbers] -- Difference between the genesis block and the current block
-    let xPeriod = [(mod' (x/blocksInPeriod) 1.00) | x <- blocksSinceGenesis] -- The value we want to feed into the sin equation
-    let priceFeedValue = [(xdrRecentValue + (amplitude * sin((xPVal) * (2 * pi)))) | xPVal <- xPeriod] -- Calculating the price feed variation
-    
+    let timePeriod = [((mod' (x/blocksInPeriod) 1.00) * blocksInPeriod) | x <- blocksSinceGenesis] -- The value we want to feed into the sin equation]
+    let priceFeedValue = [xdrRecentValue + (((xdrRecentValue*amplitude)*(sin(currentTime * ((2*pi)/blocksInPeriod) )))) | currentTime <- timePeriod] -- Calculating the price feed variation
+    let waveValue = [(((amplitude)*(sin(currentTime * ((2*pi)/blocksInPeriod) )))) | currentTime <- timePeriod] -- Calculating 
+
     -- | Starting output to CSV
     -- We start with overwriting any past version of the CSV, and placing the headers in the first row.
     -- Then we pass the lists created above into the outputToCSV function which recursively writes the data on new lines within the same CSV file.
-    shell (T.pack ("echo -n 'BlockNumbers XPeriodValue PriceFeedValue OriginalAssetValue\n' > " ++ outputFile)) Turtle.empty
-    outputToCSV blockNumbers xPeriod priceFeedValue xdrRecentValue
+    shell (T.pack ("echo -n 'BlockNumber PriceFeedValue waveValue OriginalAssetValue: " ++ (show xdrRecentValue) ++ "\n' > " ++ outputFile)) Turtle.empty
+    outputToCSV blockNumbers priceFeedValue waveValue
