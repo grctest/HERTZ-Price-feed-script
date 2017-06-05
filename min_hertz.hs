@@ -14,11 +14,11 @@ import System.Environment
 --      Blocks per 'oscillation' period (Frequency)
 --      Examples:
 --       1 block = Approx 3 seconds
---       1 hour = 1200.0
---       1 day = 28800.0
---       1 week = 201600.0
---       1 month = 876000.0
---       12 months = 10512000.0
+--       1 hour = 1200
+--       1 day = 28800
+--       1 week = 201600
+--       1 month = 876000
+--       12 months = 10512000
 -- 4. amplitude
 --      Example: 0.5 = Varies reference asset by 50% 
 -- 5. referenceAssetValue
